@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Kategoriya mahsulotlari - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+     Breadcrumb 
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'products:category-list' %}">
+                    <i class="fas fa-home me-1"></i>Bosh sahifa
+                </a>
+            </li>
+            <li class="breadcrumb-item active" id="category-name">Kategoriya</li>
+        </ol>
+    </nav>
+
+     Category Header 
+    <div class="category-header mb-4">
+        <h2 class="fw-bold text-primary" id="category-title">
+            <i class="fas fa-folder-open me-2"></i>Kategoriya mahsulotlari
+        </h2>
+    </div>
+
+     Filters 
+    <div class="filters-section mb-4">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <select class="form-select" id="sort-select">
+                    <option value="price">Narx bo'yicha (arzon)</option>
+                    <option value="-price">Narx bo'yicha (qimmat)</option>
+                    <option value="-created_at">Yangi mahsulotlar</option>
+                    <option value="-rating">Reyting bo'yicha</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <input type="number" class="form-control" id="min-price" placeholder="Min narx">
+            </div>
+            <div class="col-md-4">
+                <input type="number" class="form-control" id="max-price" placeholder="Max narx">
+            </div>
+        </div>
+    </div>
+
+     Products Grid 
+    <div class="row g-4" id="products-container">
+         Products will be loaded here 
+    </div>
+
+     Loading Spinner 
+    <div class="text-center py-5" id="loading-spinner">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Yuklanmoqda...</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const categorySlug = window.location.pathname.split('/')[3]; // Extract slug from URL
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadCategoryProducts();
+    
+    // Event listeners for filters
+    document.getElementById('sort-select').addEventListener('change', loadCategoryProducts);
+    document.getElementById('min-price').addEventListener('input', debounce(loadCategoryProducts, 500));
+    document.getElementById('max-price').addEventListener('input', debounce(loadCategoryProducts, 500));
+});
+
+async function loadCategoryProducts() {
+    try {
+        const sortBy = document.getElementById('sort-select').value;
+        const minPrice = document.getElementById('min-price').value;
+        const maxPrice = document.getElementById('max-price').value;
+        
+        let url = `/api/products/categories/${categorySlug}/products/?ordering=${sortBy}`;
+        if (minPrice) url += `&min_price=${minPrice}`;
+        if (maxPrice) url += `&max_price=${maxPrice}`;
+        
+        const response = await fetch(url);
+        const products = await response.json();
+        
+        const container = document.getElementById('products-container');
+        const spinner = document.getElementById('loading-spinner');
+        
+        if (products.length === 0) {
+            container.innerHTML = '<div class="col-12 text-center"><p class="text-muted">Bu kategoriyada mahsulotlar topilmadi</p></div>';
+        } else {
+            container.innerHTML = products.map(product => `
+                <div class="col-lg-4 col-md-6">
+                    <div class="product-card card h-100 shadow-sm hover-card">
+                        <div class="card-img-container">
+                            <img src="${product.image || '/static/images/no-image.jpg'}" 
+                                 class="card-img-top" alt="${product.name}">
+                            ${product.is_featured ? '<span class="badge bg-warning position-absolute top-0 end-0 m-2">Tavsiya</span>' : ''}
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">${product.name}</h5>
+                            <p class="card-text text-muted flex-grow-1">${product.short_description || ''}</p>
+                            <div class="product-info">
+                                <div class="price-section mb-2">
+                                    <span class="price fw-bold text-primary fs-5">${formatPrice(product.price)} so'm</span>
+                                    ${product.old_price > product.price ? 
+                                        `<span class="old-price text-muted text-decoration-line-through ms-2">${formatPrice(product.old_price)} so'm</span>` : ''}
+                                </div>
+                                <div class="rating mb-2">
+                                    ${generateStars(product.rating)}
+                                    <span class="text-muted ms-2">(${product.rating}/5)</span>
+                                </div>
+                                <a href="/products/${product.slug}/" class="btn btn-primary w-100">
+                                    <i class="fas fa-eye me-2"></i>Batafsil
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        spinner.style.display = 'none';
+    } catch (error) {
+        console.error('Mahsulotlarni yuklashda xatolik:', error);
+        document.getElementById('products-container').innerHTML = 
+            '<div class="col-12 text-center"><p class="text-danger">Mahsulotlarni yuklashda xatolik yuz berdi</p></div>';
+        document.getElementById('loading-spinner').style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

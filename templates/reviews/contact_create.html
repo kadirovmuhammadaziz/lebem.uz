@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Aloqa - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+             Contact Header 
+            <div class="contact-header text-center mb-5">
+                <h2 class="fw-bold text-primary mb-3">
+                    <i class="fas fa-envelope me-2"></i>Biz bilan bog'laning
+                </h2>
+                <p class="lead text-muted">Savollaringiz bormi? Biz bilan bog'laning!</p>
+            </div>
+
+             Contact Form 
+            <div class="contact-form-section">
+                <form id="contact-form" class="needs-validation" novalidate>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="name" class="form-label">Ismingiz *</label>
+                            <input type="text" class="form-control" id="name" required>
+                            <div class="invalid-feedback">Iltimos, ismingizni kiriting</div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Telefon raqamingiz *</label>
+                            <input type="tel" class="form-control" id="phone" required>
+                            <div class="invalid-feedback">Iltimos, telefon raqamingizni kiriting</div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="email" class="form-label">Email manzilingiz</label>
+                            <input type="email" class="form-control" id="email">
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="subject" class="form-label">Mavzu *</label>
+                            <select class="form-select" id="subject" required>
+                                <option value="">Mavzuni tanlang</option>
+                                <option value="general">Umumiy savol</option>
+                                <option value="product">Mahsulot haqida</option>
+                                <option value="complaint">Shikoyat</option>
+                                <option value="suggestion">Taklif</option>
+                                <option value="other">Boshqa</option>
+                            </select>
+                            <div class="invalid-feedback">Iltimos, mavzuni tanlang</div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="message" class="form-label">Xabaringiz *</label>
+                            <textarea class="form-control" id="message" rows="5" required></textarea>
+                            <div class="invalid-feedback">Iltimos, xabaringizni yozing</div>
+                        </div>
+                        
+                        <div class="col-12 text-center">
+                            <button type="submit" class="btn btn-primary btn-lg px-5">
+                                <i class="fas fa-paper-plane me-2"></i>Xabar yuborish
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+             Contact Info 
+            <div class="contact-info-section mt-5">
+                <div class="row g-4 text-center">
+                    <div class="col-md-4">
+                        <div class="contact-info-item">
+                            <i class="fas fa-phone fa-2x text-primary mb-3"></i>
+                            <h5>Telefon</h5>
+                            <p class="text-muted">+998 90 123 45 67</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="contact-info-item">
+                            <i class="fas fa-envelope fa-2x text-primary mb-3"></i>
+                            <h5>Email</h5>
+                            <p class="text-muted">info@maxsulot.uz</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="contact-info-item">
+                            <i class="fas fa-map-marker-alt fa-2x text-primary mb-3"></i>
+                            <h5>Manzil</h5>
+                            <p class="text-muted">Toshkent, O'zbekiston</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('contact-form').addEventListener('submit', handleContactSubmit);
+});
+
+async function handleContactSubmit(e) {
+    e.preventDefault();
+    
+    const form = e.target;
+    if (!form.checkValidity()) {
+        form.classList.add('was-validated');
+        return;
+    }
+    
+    const formData = {
+        name: document.getElementById('name').value,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value,
+        subject: document.getElementById('subject').value,
+        message: document.getElementById('message').value
+    };
+    
+    try {
+        const response = await fetch('/api/reviews/contact/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        if (response.ok) {
+            showAlert('Xabaringiz muvaffaqiyatli yuborildi! Tez orada javob beramiz.', 'success');
+            form.reset();
+            form.classList.remove('was-validated');
+        } else {
+            showAlert('Xabar yuborishda xatolik yuz berdi', 'danger');
+        }
+    } catch (error) {
+        console.error('Xabar yuborishda xatolik:', error);
+        showAlert('Xabar yuborishda xatolik yuz berdi', 'danger');
+    }
+}
+</script>
+{% endblock %}

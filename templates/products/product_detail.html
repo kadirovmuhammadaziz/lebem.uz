@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mahsulot - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+     Breadcrumb 
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'products:category-list' %}">
+                    <i class="fas fa-home me-1"></i>Bosh sahifa
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="#" id="category-link">Kategoriya</a>
+            </li>
+            <li class="breadcrumb-item active" id="product-name">Mahsulot</li>
+        </ol>
+    </nav>
+
+     Product Details 
+    <div class="product-detail-section" id="product-container">
+         Product details will be loaded here 
+    </div>
+
+     Reviews Section 
+    <div class="reviews-section mt-5">
+        <div class="row">
+            <div class="col-lg-8">
+                <h3 class="fw-bold mb-4">
+                    <i class="fas fa-comments me-2"></i>Mahsulot sharhlari
+                </h3>
+                
+                 Reviews List 
+                <div id="reviews-container">
+                     Reviews will be loaded here 
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                 Review Form 
+                <div class="review-form-section">
+                    <h4 class="fw-bold mb-3">
+                        <i class="fas fa-plus-circle me-2"></i>Sharh qoldiring
+                    </h4>
+                    
+                    <form id="review-form" class="needs-validation" novalidate>
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Ismingiz *</label>
+                            <input type="text" class="form-control" id="name" required>
+                            <div class="invalid-feedback">Iltimos, ismingizni kiriting</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Telefon raqamingiz *</label>
+                            <input type="tel" class="form-control" id="phone" required>
+                            <div class="invalid-feedback">Iltimos, telefon raqamingizni kiriting</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="rating" class="form-label">Baho *</label>
+                            <select class="form-select" id="rating" required>
+                                <option value="">Bahoni tanlang</option>
+                                <option value="5">5 - A'lo</option>
+                                <option value="4">4 - Yaxshi</option>
+                                <option value="3">3 - O'rtacha</option>
+                                <option value="2">2 - Yomon</option>
+                                <option value="1">1 - Juda yomon</option>
+                            </select>
+                            <div class="invalid-feedback">Iltimos, bahoni tanlang</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="comment" class="form-label">Sharhingiz *</label>
+                            <textarea class="form-control" id="comment" rows="4" required></textarea>
+                            <div class="invalid-feedback">Iltimos, sharhingizni yozing</div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-paper-plane me-2"></i>Sharh yuborish
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+     Loading Spinner 
+    <div class="text-center py-5" id="loading-spinner">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Yuklanmoqda...</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const productSlug = window.location.pathname.split('/')[2]; // Extract slug from URL
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadProductDetails();
+    loadProductReviews();
+    
+    // Review form submission
+    document.getElementById('review-form').addEventListener('submit', handleReviewSubmit);
+});
+
+async function loadProductDetails() {
+    try {
+        const response = await fetch(`/api/products/products/${productSlug}/`);
+        const product = await response.json();
+        
+        document.getElementById('product-name').textContent = product.name;
+        document.getElementById('category-link').textContent = product.category.name;
+        document.getElementById('category-link').href = `/products/categories/${product.category.slug}/products/`;
+        
+        const container = document.getElementById('product-container');
+        container.innerHTML = `
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="product-image-section">
+                        <img src="${product.image || '/static/images/no-image.jpg'}" 
+                             class="img-fluid rounded shadow" alt="${product.name}">
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="product-info-section">
+                        <h1 class="fw-bold text-primary mb-3">${product.name}</h1>
+                        
+                        <div class="price-section mb-3">
+                            <span class="price fw-bold text-success fs-2">${formatPrice(product.price)} so'm</span>
+                            ${product.old_price > product.price ? 
+                                `<span class="old-price text-muted text-decoration-line-through ms-3 fs-5">${formatPrice(product.old_price)} so'm</span>` : ''}
+                        </div>
+                        
+                        <div class="rating-section mb-3">
+                            ${generateStars(product.rating)}
+                            <span class="text-muted ms-2">(${product.rating}/5)</span>
+                        </div>
+                        
+                        <div class="description-section mb-4">
+                            <h5>Tavsif:</h5>
+                            <p class="text-muted">${product.description || product.short_description || 'Tavsif mavjud emas'}</p>
+                        </div>
+                        
+                        <div class="product-stats">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="stat-item">
+                                        <i class="fas fa-eye text-primary fs-4"></i>
+                                        <div class="fw-bold">${product.views_count || 0}</div>
+                                        <small class="text-muted">Ko'rishlar</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="stat-item">
+                                        <i class="fas fa-star text-warning fs-4"></i>
+                                        <div class="fw-bold">${product.rating}</div>
+                                        <small class="text-muted">Reyting</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="stat-item">
+                                        <i class="fas fa-tag text-info fs-4"></i>
+                                        <div class="fw-bold">${product.category.name}</div>
+                                        <small class="text-muted">Kategoriya</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+    } catch (error) {
+        console.error('Mahsulot ma\'lumotlarini yuklashda xatolik:', error);
+    }
+}
+
+async function loadProductReviews() {
+    try {
+        const response = await fetch(`/api/products/${productSlug}/reviews/`);
+        const reviews = await response.json();
+        
+        const container = document.getElementById('reviews-container');
+        
+        if (reviews.length === 0) {
+            container.innerHTML = '<p class="text-muted">Hozircha sharhlar yo\'q. Birinchi bo\'lib sharh qoldiring!</p>';
+        } else {
+            container.innerHTML = reviews.map(review => `
+                <div class="review-item card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h6 class="fw-bold mb-1">${review.name}</h6>
+                                <div class="rating">
+                                    ${generateStars(review.rating)}
+                                </div>
+                            </div>
+                            <small class="text-muted">${formatDate(review.created_at)}</small>
+                        </div>
+                        <p class="mb-0">${review.comment}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        document.getElementById('loading-spinner').style.display = 'none';
+    } catch (error) {
+        console.error('Sharhlarni yuklashda xatolik:', error);
+        document.getElementById('loading-spinner').style.display = 'none';
+    }
+}
+
+async function handleReviewSubmit(e) {
+    e.preventDefault();
+    
+    const form = e.target;
+    if (!form.checkValidity()) {
+        form.classList.add('was-validated');
+        return;
+    }
+    
+    const formData = {
+        product: productSlug,
+        name: document.getElementById('name').value,
+        phone: document.getElementById('phone').value,
+        rating: parseInt(document.getElementById('rating').value),
+        comment: document.getElementById('comment').value
+    };
+    
+    try {
+        const response = await fetch('/api/reviews/create/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        if (response.ok) {
+            showAlert('Sharhingiz muvaffaqiyatli yuborildi!', 'success');
+            form.reset();
+            form.classList.remove('was-validated');
+            loadProductReviews(); // Reload reviews
+        } else {
+            showAlert('Sharh yuborishda xatolik yuz berdi', 'danger');
+        }
+    } catch (error) {
+        console.error('Sharh yuborishda xatolik:', error);
+        showAlert('Sharh yuborishda xatolik yuz berdi', 'danger');
+    }
+}
+</script>
+{% endblock %}

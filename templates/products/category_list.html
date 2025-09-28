@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Kategoriyalar - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+     Hero Section 
+    <div class="hero-section text-center mb-5">
+        <h1 class="display-4 fw-bold text-primary mb-3">
+            <i class="fas fa-store me-3"></i>MAXSULOT LOGO
+        </h1>
+        <p class="lead text-muted">Sifatli mahsulotlar va professional xizmat</p>
+    </div>
+
+     Categories Grid 
+    <div class="row g-4" id="categories-container">
+         Categories will be loaded here via JavaScript 
+    </div>
+
+     Loading Spinner 
+    <div class="text-center py-5" id="loading-spinner">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Yuklanmoqda...</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadCategories();
+});
+
+async function loadCategories() {
+    try {
+        const response = await fetch('/api/products/categories/');
+        const categories = await response.json();
+        
+        const container = document.getElementById('categories-container');
+        const spinner = document.getElementById('loading-spinner');
+        
+        if (categories.length === 0) {
+            container.innerHTML = '<div class="col-12 text-center"><p class="text-muted">Kategoriyalar topilmadi</p></div>';
+        } else {
+            container.innerHTML = categories.map(category => `
+                <div class="col-lg-4 col-md-6">
+                    <div class="category-card card h-100 shadow-sm hover-card">
+                        <div class="card-body text-center p-4">
+                            <div class="category-icon mb-3">
+                                <i class="fas fa-folder-open fa-3x text-primary"></i>
+                            </div>
+                            <h5 class="card-title fw-bold">${category.name}</h5>
+                            <p class="card-text text-muted">${category.description || 'Kategoriya tavsifi'}</p>
+                            <a href="/products/categories/${category.slug}/products/" class="btn btn-primary">
+                                <i class="fas fa-eye me-2"></i>Ko'rish
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        spinner.style.display = 'none';
+    } catch (error) {
+        console.error('Kategoriyalarni yuklashda xatolik:', error);
+        document.getElementById('categories-container').innerHTML = 
+            '<div class="col-12 text-center"><p class="text-danger">Kategoriyalarni yuklashda xatolik yuz berdi</p></div>';
+        document.getElementById('loading-spinner').style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

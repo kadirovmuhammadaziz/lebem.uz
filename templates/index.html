@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Bosh sahifa - Mahsulotlar{% endblock %}
+
+{% block content %}
+ Hero Section 
+<section class="hero-section bg-light py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold text-primary mb-4">
+                    Sifatli Mahsulotlar
+                </h1>
+                <p class="lead mb-4">
+                    Eng yaxshi mahsulotlarni toping va boshqa mijozlarning sharhlarini o'qing
+                </p>
+                <button class="btn btn-primary btn-lg" onclick="scrollToCategories()">
+                    <i class="fas fa-search me-2"></i>Mahsulotlarni ko'rish
+                </button>
+            </div>
+            <div class="col-lg-6">
+                <img src="{% static 'images/no-image.jpg' %}" alt="Hero Image" class="img-fluid rounded">
+            </div>
+        </div>
+    </div>
+</section>
+
+ Categories Section 
+<section class="categories-section py-5" id="categories">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center mb-5">
+                <h2 class="section-title">Kategoriyalar</h2>
+                <p class="text-muted">Qiziqtirgan kategoriyangizni tanlang</p>
+            </div>
+        </div>
+        
+         Categories will be loaded here 
+        <div id="categories-container" class="row">
+             Loading placeholder 
+            <div class="col-12 text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Kategoriyalar yuklanmoqda...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+ Featured Products Section 
+<section class="featured-section py-5 bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center mb-5">
+                <h2 class="section-title">Tanlangan Mahsulotlar</h2>
+                <p class="text-muted">Eng mashhur va sifatli mahsulotlar</p>
+            </div>
+        </div>
+        
+         Featured products will be loaded here 
+        <div id="featured-products-container" class="row">
+             Loading placeholder 
+            <div class="col-12 text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Mahsulotlar yuklanmoqda...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Load categories and featured products when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadCategories();
+    loadFeaturedProducts();
+});
+
+function scrollToCategories() {
+    document.getElementById('categories').scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+{% endblock %}

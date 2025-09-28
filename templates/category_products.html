@@ -1,0 +1,61 @@
+Category Products Page Template 
+<section class="category-products-section py-5">
+    <div class="container">
+         Category Header 
+        <div class="row mb-4">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="/" onclick="loadHomePage(); return false;">Bosh sahifa</a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page" id="category-name">
+                            Kategoriya
+                        </li>
+                    </ol>
+                </nav>
+                <h1 class="category-title mb-3" id="category-title">Kategoriya Mahsulotlari</h1>
+                <p class="text-muted" id="category-description">Kategoriya tavsifi</p>
+            </div>
+        </div>
+
+         Filters and Sorting 
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="d-flex align-items-center">
+                    <label for="sort-select" class="form-label me-2 mb-0">Saralash:</label>
+                    <select class="form-select" id="sort-select" onchange="sortProducts()">
+                        <option value="price">Narx bo'yicha (arzon)</option>
+                        <option value="-price">Narx bo'yicha (qimmat)</option>
+                        <option value="-created_at">Yangi mahsulotlar</option>
+                        <option value="-rating">Reyting bo'yicha</option>
+                        <option value="-views_count">Mashhur mahsulotlar</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <span class="text-muted" id="products-count">0 ta mahsulot topildi</span>
+            </div>
+        </div>
+
+         Products Grid 
+        <div id="products-container" class="row">
+             Products will be loaded here 
+            <div class="col-12 text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Mahsulotlar yuklanmoqda...</span>
+                </div>
+            </div>
+        </div>
+
+         No products message 
+        <div id="no-products" class="text-center py-5" style="display: none;">
+            <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">Bu kategoriyada mahsulot topilmadi</h4>
+            <p class="text-muted">Boshqa kategoriyalarni ko'rib chiqing</p>
+            <a href="/" class="btn btn-primary" onclick="loadHomePage(); return false;">
+                Bosh sahifaga qaytish
+            </a>
+        </div>
+    </div>
+</section>
