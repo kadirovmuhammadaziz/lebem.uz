@@ -1,169 +1,156 @@
-from rest_framework import generics, filters, status
-from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from django.db.models import Q, F, Min, Max
 from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import Q
+from django.db import models
+from rest_framework import generics, filters
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
 from .models import Category, Product
-from .serializers import CategorySerializer, CategoryDetailSerializer, ProductSerializer
-from django.views.generic import TemplateView
-from django.shortcuts import render, get_object_or_404
+from .serializers import (
+    CategorySerializer, CategoryListSerializer, ProductListSerializer,
+    ProductDetailSerializer, ProductSearchSerializer
+)
 
 
 class CategoryListView(generics.ListAPIView):
+    """Kategoriyalar ro'yxati"""
     queryset = Category.objects.filter(is_active=True)
-    serializer_class = CategorySerializer
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['name', 'description']
+    serializer_class = CategoryListSerializer
+
+    def get_queryset(self):
+        return super().get_queryset().order_by('sort_order', 'name')
 
 
 class CategoryDetailView(generics.RetrieveAPIView):
+    """Kategoriya tafsilotlari"""
     queryset = Category.objects.filter(is_active=True)
-    serializer_class = CategoryDetailSerializer
+    serializer_class = CategorySerializer
     lookup_field = 'slug'
 
 
 class ProductListView(generics.ListAPIView):
-    serializer_class = ProductSerializer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    """Mahsulotlar ro'yxati"""
+    queryset = Product.objects.filter(is_active=True).select_related('category')
+    serializer_class = ProductListSerializer
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
     filterset_fields = ['category', 'is_featured']
-    search_fields = ['name', 'description']
-    ordering_fields = ['price', 'created_at']
-    ordering = ['price']  # Default ordering by price (arzon narx birinchi)
+    search_fields = ['name', 'description', 'short_description']
+    ordering_fields = ['price', 'created_at', 'rating', 'views_count']
+    ordering = ['-created_at']
 
     def get_queryset(self):
-        queryset = Product.objects.filter(is_active=True).select_related('category')
+        queryset = super().get_queryset()
 
-        # Kategoriya bo'yicha filterlash
-        category_slug = self.request.query_params.get('category_slug', None)
+        # Category bo'yicha filter
+        category_slug = self.request.query_params.get('category_slug')
         if category_slug:
             queryset = queryset.filter(category__slug=category_slug)
 
-        # Narx oralig'i bo'yicha filterlash
-        min_price = self.request.query_params.get('min_price', None)
-        max_price = self.request.query_params.get('max_price', None)
+        # Narx oralig'i bo'yicha filter
+        min_price = self.request.query_params.get('min_price')
+        max_price = self.request.query_params.get('max_price')
 
         if min_price:
             queryset = queryset.filter(price__gte=min_price)
         if max_price:
             queryset = queryset.filter(price__lte=max_price)
 
+        # Chegirma bor mahsulotlar
+        has_discount = self.request.query_params.get('has_discount')
+        if has_discount == 'false':
+            queryset = queryset.filter(
+                Q(old_price__lte=F('price')) | Q(old_price=0)
+            )
+
+        # Reyting bo'yicha filter
+        min_rating = self.request.query_params.get('min_rating')
+        if min_rating:
+            queryset = queryset.filter(rating__gte=min_rating)
+
         return queryset
 
 
 class ProductDetailView(generics.RetrieveAPIView):
-    queryset = Product.objects.filter(is_active=True)
-    serializer_class = ProductSerializer
+    """Mahsulot tafsilotlari"""
+    queryset = Product.objects.filter(is_active=True).select_related('category')
+    serializer_class = ProductDetailSerializer
     lookup_field = 'slug'
 
-
-# Mahsulotni o'chirish uchun DestroyAPIView
-class ProductDeleteView(generics.DestroyAPIView):
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
-    lookup_field = 'slug'
-
-    def destroy(self, request, *args, **kwargs):
+    def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        # Soft delete - mahsulotni faol emas deb belgilash
-        instance.is_active = False
-        instance.save()
+        # Ko'rishlar sonini oshirish
+        instance.views_count += 1
+        instance.save(update_fields=['views_count'])
 
-        return Response(
-            {'message': 'Mahsulot muvaffaqiyatli o\'chirildi'},
-            status=status.HTTP_200_OK
-        )
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
 
-# Yoki function-based view sifatida
-@api_view(['DELETE'])
-def delete_product(request, slug):
-    """Mahsulotni o'chirish (soft delete)"""
-    try:
-        product = Product.objects.get(slug=slug)
-        # Soft delete
-        product.is_active = False
-        product.save()
-
-        return Response({
-            'success': True,
-            'message': 'Mahsulot muvaffaqiyatli o\'chirildi'
-        }, status=status.HTTP_200_OK)
-
-    except Product.DoesNotExist:
-        return Response({
-            'success': False,
-            'message': 'Mahsulot topilmadi'
-        }, status=status.HTTP_404_NOT_FOUND)
+class FeaturedProductsView(generics.ListAPIView):
+    """Tanlanган mahsulotlar"""
+    queryset = Product.objects.filter(is_active=True, is_featured=True).select_related('category')
+    serializer_class = ProductListSerializer
+    ordering = ['-created_at']
 
 
-# Agar to'liq o'chirish kerak bo'lsa (hard delete)
-@api_view(['DELETE'])
-def hard_delete_product(request, slug):
-    """Mahsulotni butunlay o'chirish (hard delete)"""
-    try:
-        product = Product.objects.get(slug=slug)
-        product_name = product.name
-        product.delete()  # Bazadan butunlay o'chirish
+class CategoryProductsView(generics.ListAPIView):
+    """Kategoriya bo'yicha mahsulotlar"""
+    serializer_class = ProductListSerializer
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    ordering_fields = ['price', 'created_at', 'rating']
+    ordering = ['price']  # Default: arzon narxdan boshlab
 
-        return Response({
-            'success': True,
-            'message': f'{product_name} mahsuloti butunlay o\'chirildi'
-        }, status=status.HTTP_200_OK)
+    def get_queryset(self):
+        category_slug = self.kwargs.get('slug')
+        return Product.objects.filter(
+            category__slug=category_slug,
+            is_active=True,
+            category__is_active=True
+        ).select_related('category')
 
-    except Product.DoesNotExist:
-        return Response({
-            'success': False,
-            'message': 'Mahsulot topilmadi'
-        }, status=status.HTTP_404_NOT_FOUND)
+
+class ProductSearchView(generics.ListAPIView):
+    """Mahsulot qidiruvi"""
+    serializer_class = ProductSearchSerializer
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name', 'description', 'short_description', 'category__name']
+    ordering_fields = ['price', 'created_at', 'rating']
+    ordering = ['price']
+
+    def get_queryset(self):
+        return Product.objects.filter(is_active=True).select_related('category')
 
 
 @api_view(['GET'])
-def featured_products(request):
-    """Tavsiya etilgan mahsulotlar"""
-    products = Product.objects.filter(is_featured=True, is_active=True)[:8]
-    serializer = ProductSerializer(products, many=True)
-    return Response(serializer.data)
-
-
-@api_view(['GET'])
-def cheap_products(request):
-    """Eng arzon mahsulotlar"""
-    products = Product.objects.filter(is_active=True).order_by('price')[:10]
-    serializer = ProductSerializer(products, many=True)
-    return Response(serializer.data)
-
-
-@api_view(['GET'])
-def expensive_products(request):
-    """Eng qimmat mahsulotlar"""
-    products = Product.objects.filter(is_active=True).order_by('-price')[:10]
-    serializer = ProductSerializer(products, many=True)
-    return Response(serializer.data)
-
-
-class IndexView(TemplateView):
-    template_name = 'index.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['featured_products'] = Product.objects.filter(
-            is_featured=True, is_active=True
-        )[:8]  # tavsiya etilgan
-        context['categories'] = Category.objects.filter(
-            is_active=True
-        )[:6]  # faqat 6 ta kategoriya chiqadi
-        context['cheap_products'] = Product.objects.filter(
-            is_active=True
-        ).order_by('price')[:4]  # eng arzon 4 ta mahsulot
-        return context
-
-
-def product_list(request):
+def product_filters_info(request):
+    """Mahsulot filterlash uchun ma'lumotlar"""
     products = Product.objects.filter(is_active=True)
-    return render(request, 'products/product_list.html', {'products': products})
+
+    price_range = products.aggregate(
+        min_price=Min('price'),
+        max_price=Max('price')
+    )
+
+    return Response({
+        'price_range': price_range,
+        'categories': CategoryListSerializer(
+            Category.objects.filter(is_active=True),
+            many=True
+        ).data
+    })
 
 
-def product_detail(request, slug):
-    """Mahsulot batafsil sahifasi"""
-    product = get_object_or_404(Product, slug=slug, is_active=True)
-    return render(request, 'products/product_detail.html', {'object': product})
+@api_view(['GET'])
+def popular_products(request):
+    """Ommabop mahsulotlar (ko'p ko'rilganlar)"""
+    products = Product.objects.filter(is_active=True).order_by('-views_count')[:10]
+    serializer = ProductListSerializer(products, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+def latest_products(request):
+    """Yangi mahsulotlar"""
+    products = Product.objects.filter(is_active=True).order_by('-created_at')[:10]
+    serializer = ProductListSerializer(products, many=True)
+    return Response(serializer.data)

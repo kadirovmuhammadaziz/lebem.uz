@@ -1,5 +1,24 @@
 from rest_framework import serializers
-from .models import Category, Product, ProductImage
+from .models import Category, Product, ProductImage, ProductSpecification
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    products_count = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Category
+        fields = [
+            'id', 'name', 'slug', 'description', 'image',
+            'products_count', 'is_active', 'created_at'
+        ]
+
+
+class CategoryListSerializer(serializers.ModelSerializer):
+    products_count = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Category
+        fields = ['id', 'name', 'slug', 'image', 'products_count']
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
@@ -8,33 +27,51 @@ class ProductImageSerializer(serializers.ModelSerializer):
         fields = ['id', 'image', 'alt_text']
 
 
-class ProductSerializer(serializers.ModelSerializer):
-    additional_images = ProductImageSerializer(many=True, read_only=True)
-    category_name = serializers.CharField(source='category.name', read_only=True)
+class ProductSpecificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductSpecification
+        fields = ['id', 'name', 'value']
+
+
+class ProductListSerializer(serializers.ModelSerializer):
+    category = CategoryListSerializer(read_only=True)
+    discount_percentage = serializers.ReadOnlyField()
+    main_image = serializers.ImageField(read_only=True)
 
     class Meta:
         model = Product
         fields = [
-            'id', 'name', 'slug', 'description', 'price', 'image',
-            'additional_images', 'category', 'category_name',
-            'is_featured', 'created_at'
+            'id', 'name', 'slug', 'short_description', 'price',
+            'old_price', 'discount_percentage', 'main_image',
+            'category', 'rating', 'reviews_count', 'is_featured'
         ]
 
 
-class CategorySerializer(serializers.ModelSerializer):
-    products_count = serializers.SerializerMethodField()
+class ProductDetailSerializer(serializers.ModelSerializer):
+    category = CategoryListSerializer(read_only=True)
+    images = ProductImageSerializer(many=True, read_only=True)
+    specifications = ProductSpecificationSerializer(many=True, read_only=True)
+    discount_percentage = serializers.ReadOnlyField()
+    reviews_count = serializers.ReadOnlyField()
 
     class Meta:
-        model = Category
-        fields = ['id', 'name', 'slug', 'image', 'description', 'products_count']
+        model = Product
+        fields = [
+            'id', 'name', 'slug', 'description', 'short_description',
+            'price', 'old_price', 'discount_percentage', 'main_image',
+            'category', 'images', 'specifications', 'rating',
+            'reviews_count', 'views_count', 'is_featured', 'created_at'
+        ]
 
-    def get_products_count(self, obj):
-        return obj.products.filter(is_active=True).count()
 
-
-class CategoryDetailSerializer(serializers.ModelSerializer):
-    products = ProductSerializer(many=True, read_only=True)
+class ProductSearchSerializer(serializers.ModelSerializer):
+    category = CategoryListSerializer(read_only=True)
+    discount_percentage = serializers.ReadOnlyField()
 
     class Meta:
-        model = Category
-        fields = ['id', 'name', 'slug', 'image', 'description', 'products']
+        model = Product
+        fields = [
+            'id', 'name', 'slug', 'short_description', 'price',
+            'old_price', 'discount_percentage', 'main_image',
+            'category', 'rating'
+        ]
