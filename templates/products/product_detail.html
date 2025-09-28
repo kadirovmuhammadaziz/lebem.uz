@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ object.name }} - Lebem{% endblock %}
+
+{% block content %}
+<section class="product-detail">
+    <div class="container">
+        <div class="product-content">
+            <div class="product-image">
+                {% if object.image %}
+                <img src="{{ object.image.url }}" alt="{{ object.name }}">
+                {% else %}
+                <div class="no-image large">
+                    <i class="fas fa-couch"></i>
+                </div>
+                {% endif %}
+            </div>
+            <div class="product-info">
+                <h1>{{ object.name }}</h1>
+                <div class="category-tag">{{ object.category.name }}</div>
+                <p class="price">{{ object.price|floatformat:0 }} so'm</p>
+                <div class="description">
+                    <h3>Tavsif</h3>
+                    <p>{{ object.description }}</p>
+                </div>
+                {% if object.is_featured %}
+                <div class="featured-badge">
+                    <i class="fas fa-star"></i>
+                    Tavsiya etilgan
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Review Section -->
+<section class="reviews-section">
+    <div class="container">
+        <h2>Fikr-mulohaza qoldirish</h2>
+
+        <form id="reviewForm" class="review-form">
+            <div class="form-group">
+                <label for="phone">Telefon raqam *</label>
+                <input type="tel" id="phone" name="phone" required placeholder="+998 90 123 45 67">
+            </div>
+            <div class="form-group">
+                <label for="review">Izoh *</label>
+                <textarea id="review" name="content" required placeholder="Mahsulot haqida fikringizni yozing..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="rating">Baho (1-5)</label>
+                <div class="rating-input">
+                    <input type="radio" id="star5" name="rating" value="5">
+                    <label for="star5" title="5 yulduz"><i class="fas fa-star"></i></label>
+                    <input type="radio" id="star4" name="rating" value="4">
+                    <label for="star4" title="4 yulduz"><i class="fas fa-star"></i></label>
+                    <input type="radio" id="star3" name="rating" value="3" checked>
+                    <label for="star3" title="3 yulduz"><i class="fas fa-star"></i></label>
+                    <input type="radio" id="star2" name="rating" value="2">
+                    <label for="star2" title="2 yulduz"><i class="fas fa-star"></i></label>
+                    <input type="radio" id="star1" name="rating" value="1">
+                    <label for="star1" title="1 yulduz"><i class="fas fa-star"></i></label>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Izoh yuborish</button>
+        </form>
+
+        <div id="reviewMessage" class="message" style="display: none;"></div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const reviewForm = document.getElementById('reviewForm');
+    const messageDiv = document.getElementById('reviewMessage');
+
+    // Get product ID from URL
+    const productSlug = window.location.pathname.split('/').slice(-2, -1)[0];
+
+    reviewForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const formData = {
+            product: '{{ object.id }}',
+            phone: document.getElementById('phone').value,
+            content: document.getElementById('review').value,
+            rating: document.querySelector('input[name="rating"]:checked').value
+        };
+
+        fetch('/api/reviews/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                messageDiv.className = 'message success';
+                messageDiv.textContent = data.message;
+                messageDiv.style.display = 'block';
+                reviewForm.reset();
+
+                // Hide message after 5 seconds
+                setTimeout(() => {
+                    messageDiv.style.display = 'none';
+                }, 5000);
+            }
+        })
+        .catch(error => {
+            messageDiv.className = 'message error';
+            messageDiv.textContent = 'Xatolik yuz berdi. Iltimos qayta urinib ko\'ring.';
+            messageDiv.style.display = 'block';
+            console.error('Error:', error);
+        });
+    });
+
+    // Rating stars functionality
+    const ratingInputs = document.querySelectorAll('.rating-input input[type="radio"]');
+    const ratingLabels = document.querySelectorAll('.rating-input label');
+
+    ratingLabels.forEach((label, index) => {
+        label.addEventListener('mouseover', function() {
+            highlightStars(5 - index);
+        });
+
+        label.addEventListener('mouseout', function() {
+            const checkedRating = document.querySelector('.rating-input input[type="radio"]:checked');
+            if (checkedRating) {
+                highlightStars(parseInt(checkedRating.value));
+            } else {
+                clearStars();
+            }
+        });
+
+        label.addEventListener('click', function() {
+            highlightStars(5 - index);
+        });
+    });
+
+    function highlightStars(rating) {
+        ratingLabels.forEach((label, index) => {
+            if (index < rating) {
+                label.classList.add('active');
+            } else {
+                label.classList.remove('active');
+            }
+        });
+    }
+
+    function clearStars() {
+        ratingLabels.forEach(label => {
+            label.classList.remove('active');
+        });
+    }
+
+    // Initialize rating display
+    const checkedRating = document.querySelector('.rating-input input[type="radio"]:checked');
+    if (checkedRating) {
+        highlightStars(parseInt(checkedRating.value));
+    }
+});
+</script>
+{% endblock %}

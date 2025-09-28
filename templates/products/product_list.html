@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mahsulotlar - Lebem{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div class="container">
+        <h1>Mahsulotlar</h1>
+        <p>Bizning barcha mahsulotlar bilan tanishing</p>
+    </div>
+</section>
+
+<section class="products-section">
+    <div class="container">
+        <div class="products-filter">
+            <div class="filter-group">
+                <label>Kategoriya:</label>
+                <select id="categoryFilter">
+                    <option value="">Barchasi</option>
+                    <!-- Categories will be loaded via JavaScript -->
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Narx oralig'i:</label>
+                <div class="price-inputs">
+                    <input type="number" id="minPrice" placeholder="Min narx">
+                    <input type="number" id="maxPrice" placeholder="Max narx">
+                </div>
+            </div>
+            <div class="filter-group">
+                <label>Qidiruv:</label>
+                <input type="text" id="searchInput" placeholder="Mahsulot nomi...">
+            </div>
+            <div class="filter-group">
+                <label>Tartiblash:</label>
+                <select id="orderingFilter">
+                    <option value="price">Narx bo'yicha (arzon)</option>
+                    <option value="-price">Narx bo'yicha (qimmat)</option>
+                    <option value="created_at">Yangi mahsulotlar</option>
+                </select>
+            </div>
+            <button type="button" id="filterBtn" class="btn btn-primary">Filtrlaش</button>
+        </div>
+
+        <div class="products-grid" id="productsGrid">
+            <!-- Products will be loaded here via JavaScript -->
+        </div>
+
+        <div class="loading" id="loading" style="display: none;">
+            <div class="spinner"></div>
+        </div>
+    </div>
+</section>
+
+<script>
+// Products page JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    const productsGrid = document.getElementById('productsGrid');
+    const loading = document.getElementById('loading');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const minPriceInput = document.getElementById('minPrice');
+    const maxPriceInput = document.getElementById('maxPrice');
+    const searchInput = document.getElementById('searchInput');
+    const orderingFilter = document.getElementById('orderingFilter');
+    const filterBtn = document.getElementById('filterBtn');
+
+    // Load categories
+    fetch('/api/categories/')
+        .then(response => response.json())
+        .then(data => {
+            data.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.slug;
+                option.textContent = category.name;
+                categoryFilter.appendChild(option);
+            });
+        });
+
+    // Load products function
+    function loadProducts() {
+        loading.style.display = 'block';
+        productsGrid.innerHTML = '';
+
+        let url = '/api/products/?';
+
+        if (categoryFilter.value) {
+            url += `category_slug=${categoryFilter.value}&`;
+        }
+        if (minPriceInput.value) {
+            url += `min_price=${minPriceInput.value}&`;
+        }
+        if (maxPriceInput.value) {
+            url += `max_price=${maxPriceInput.value}&`;
+        }
+        if (searchInput.value) {
+            url += `search=${searchInput.value}&`;
+        }
+        if (orderingFilter.value) {
+            url += `ordering=${orderingFilter.value}&`;
+        }
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                loading.style.display = 'none';
+                displayProducts(data.results || data);
+            })
+            .catch(error => {
+                loading.style.display = 'none';
+                console.error('Error:', error);
+            });
+    }
+
+    // Display products function
+    function displayProducts(products) {
+        if (products.length === 0) {
+            productsGrid.innerHTML = '<div class="no-products">Hech qanday mahsulot topilmadi</div>';
+            return;
+        }
+
+        products.forEach(product => {
+            const productCard = document.createElement('div');
+            productCard.className = 'product-card';
+            productCard.innerHTML = `
+                ${product.image ?
+                    `<img src="${product.image}" alt="${product.name}">` :
+                    `<div class="no-image"><i class="fas fa-couch"></i></div>`
+                }
+                <div class="product-info">
+                    <h3>${product.name}</h3>
+                    <p class="price">${parseFloat(product.price).toLocaleString()} so'm</p>
+                    <a href="/products/${product.slug}/" class="btn btn-secondary">Batafsil</a>
+                </div>
+            `;
+            productsGrid.appendChild(productCard);
+        });
+    }
+
+    // Event listeners
+    filterBtn.addEventListener('click', loadProducts);
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            loadProducts();
+        }
+    });
+
+    // Initial load
+    loadProducts();
+});
+</script>
+{% endblock %}

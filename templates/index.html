@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Lebem - Mebel Korxonasi{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-content">
+        <div class="hero-text">
+            <h1>Lebem Mebel Korxonasi</h1>
+            <p>Yuqori sifatli va zamonaviy mebellarni ishlab chiqaruvchi korxona. Sizning uyingizni yanada chiroyli qilish uchun eng yaxshi mahsulotlar!</p>
+            <a href="{% url 'product-list' %}" class="btn btn-primary">Mahsulotlarni ko'rish</a>
+        </div>
+        <div class="hero-image">
+            <img src="{% static 'images/hero-furniture.jpg' %}" alt="Mebel rasmlari">
+        </div>
+    </div>
+</section>
+
+<!-- Featured Products Section -->
+<section class="featured-products">
+    <div class="container">
+        <h2 class="section-title">Tavsiya etilgan mahsulotlar</h2>
+        <div class="products-grid">
+            {% for product in featured_products %}
+            <div class="product-card">
+                {% if product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                {% else %}
+                <div class="no-image">
+                    <i class="fas fa-couch"></i>
+                </div>
+                {% endif %}
+                <div class="product-info">
+                    <h3>{{ product.name }}</h3>
+                    <p class="price">{{ product.price|floatformat:0 }} so'm</p>
+                    <a href="{% url 'product-detail' product.slug %}" class="btn btn-secondary">Batafsil</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Categories Section -->
+<section class="categories">
+    <div class="container">
+        <h2 class="section-title">Mahsulot kategoriyalari</h2>
+        <div class="categories-grid">
+            {% for category in categories %}
+            <div class="category-card">
+                <div class="category-icon">
+                    <i class="fas fa-chair"></i>
+                </div>
+                <h3>{{ category.name }}</h3>
+                <p>{{ category.description|truncatewords:10 }}</p>
+                <a href="{% url 'product-list' %}?category_slug={{ category.slug }}" class="btn btn-outline">Ko'rish</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Cheap Products Section -->
+<section class="cheap-products">
+    <div class="container">
+        <h2 class="section-title">Eng arzon mahsulotlar</h2>
+        <div class="products-row">
+            {% for product in cheap_products %}
+            <div class="product-card small">
+                {% if product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                {% else %}
+                <div class="no-image small">
+                    <i class="fas fa-couch"></i>
+                </div>
+                {% endif %}
+                <div class="product-info">
+                    <h4>{{ product.name }}</h4>
+                    <p class="price">{{ product.price|floatformat:0 }} so'm</p>
+                    <a href="{% url 'product-detail' product.slug %}" class="btn btn-sm">Batafsil</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Contact Section -->
+<section class="contact" id="contact">
+    <div class="container">
+        <h2 class="section-title">Biz bilan bog'laning</h2>
+        <div class="contact-content">
+            <div class="contact-info">
+                <div class="contact-item">
+                    <i class="fas fa-phone"></i>
+                    <div>
+                        <h4>Telefon</h4>
+                        <p>+998 90 123 45 67</p>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-envelope"></i>
+                    <div>
+                        <h4>Email</h4>
+                        <p>info@lebem.uz</p>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <div>
+                        <h4>Manzil</h4>
+                        <p>Toshkent, O'zbekiston</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

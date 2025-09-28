@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Lebem - Mebel Korxonasi{% endblock %}</title>
+    <link rel="stylesheet" href="{% load static %}{% static 'css/style.css' %}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <img src="{% static 'images/logo.png' %}" alt="Lebem Logo" class="logo">
+                <h2>Lebem</h2>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="{% url 'index' %}">Bosh sahifa</a></li>
+                <li><a href="{% url 'product-list' %}">Mahsulotlar</a></li>
+                <li><a href="{% url 'categories' %}">Kategoriyalar</a></li>
+                <li><a href="#contact">Bog'lanish</a></li>
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        {% block content %}
+        <!-- Categories Section -->
+        <section id="categories" class="categories-section">
+            <div class="container">
+                <div class="section-title">
+                    <h2>Mebel Kategoriyalari</h2>
+                    <p>Sizga kerakli mebelni tanlang</p>
+                </div>
+
+                <div class="categories-grid">
+                    <div class="category-card" onclick="showProducts('chairs')">
+                        <div class="icon">
+                            <i class="fas fa-chair"></i>
+                        </div>
+                        <h3>Stullar</h3>
+                        <p>Har xil turdagi stullar - ofis, oshxona va yashash xonasi uchun</p>
+                    </div>
+
+                    <div class="category-card" onclick="showProducts('tables')">
+                        <div class="icon">
+                            <i class="fas fa-table"></i>
+                        </div>
+                        <h3>Stollar</h3>
+                        <p>Kompyuter stollari, ovqat stollari va boshqa stollar</p>
+                    </div>
+
+                    <div class="category-card" onclick="showProducts('beds')">
+                        <div class="icon">
+                            <i class="fas fa-bed"></i>
+                        </div>
+                        <h3>Yotoqlar</h3>
+                        <p>Qulay va zamonaviy yotoq xonasi mebellari</p>
+                    </div>
+
+                    <div class="category-card" onclick="showProducts('wardrobes')">
+                        <div class="icon">
+                            <i class="fas fa-door-open"></i>
+                        </div>
+                        <h3>Shkaflar</h3>
+                        <p>Kiyim va boshqa narsalar uchun shkaflar</p>
+                    </div>
+                </div>
+
+                <!-- Product Filter -->
+                <div class="product-filter">
+                    <button class="filter-btn active" onclick="filterProducts('all')">Barchasi</button>
+                    <button class="filter-btn" onclick="filterProducts('cheap')">Arzon</button>
+                    <button class="filter-btn" onclick="filterProducts('expensive')">Qimmat</button>
+                </div>
+
+                <!-- Products Grid -->
+                <div id="products-container">
+                    <div id="chairs-products" class="products-grid">
+                        <div class="product-card" data-price="cheap">
+                            <div class="price-badge cheap">Arzon</div>
+                            <div class="product-image">
+                                <i class="fas fa-chair"></i>
+                            </div>
+                            <div class="product-info">
+                                <h4>Oddiy Ofis Stuli</h4>
+                                <div class="product-price">150,000 so'm</div>
+                                <div class="product-description">Kundalik ishlar uchun qulay stul</div>
+                            </div>
+                        </div>
+
+                        <div class="product-card" data-price="expensive">
+                            <div class="price-badge expensive">Qimmat</div>
+                            <div class="product-image">
+                                <i class="fas fa-chair"></i>
+                            </div>
+                            <div class="product-info">
+                                <h4>Lux Ofis Stuli</h4>
+                                <div class="product-price expensive">750,000 so'm</div>
+                                <div class="product-description">Yuqori sifatli, ergonomik dizayn</div>
+                            </div>
+                        </div>
+
+                        <div class="product-card" data-price="cheap">
+                            <div class="price-badge cheap">Arzon</div>
+                            <div class="product-image">
+                                <i class="fas fa-chair"></i>
+                            </div>
+                            <div class="product-info">
+                                <h4>Oshxona Stuli</h4>
+                                <div class="product-price">200,000 so'm</div>
+                                <div class="product-description">Oshxona uchun oddiy va mustahkam</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="tables-products" class="products-grid hidden">
+                        <div class="product-card" data-price="cheap">
+                            <div class="price-badge cheap">Arzon</div>
+                            <div class="product-image">
+                                <i class="fas fa-table"></i>
+                            </div>
+                            <div class="product-info">
+                                <h4>Oddiy Kompyuter Stoli</h4>
+                                <div class="product-price">300,000 so'm</div>
+                                <div class="product-description">Kichik ofis uchun mos</div>
+                            </div>
+                        </div>
+
+                        <div class="product-card" data-price="expensive">
+                            <div class="price-badge expensive">Qimmat</div>
+                            <div class="product-image">
+                                <i class="fas fa-table"></i>
+                            </div>
+                            <div class="product-info">
+                                <h4>Zamonaviy Ofis Stoli</h4>
+                                <div class="product-price expensive">1,200,000 so'm</div>
+                                <div class="product-description">Keng va funksional dizayn</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="beds-products" class="products-grid hidden">
+                        <div class="product-card" data-price="cheap">
+                            <div class="price-badge cheap">Arzon</div>
+                            <div class="product-image">
+                                <i class="fas fa-bed"></i>
+                            </div>
+                            <div class="product-info">
+                                <h4>Birlik Karavot</h4>
+                                <div class="product-price">800,000 so'm</div>
+                                <div class="product-description">Oddiy va qulay yotoq</div>
+                            </div>
+                        </div>
+
+                        <div class="product-card" data-price="expensive">
+                            <div class="price-badge expensive">Qimmat</div>
+                            <div class="product-image">
+                                <i class="fas fa-bed"></i>
+                            </div>
+                            <div class="product-info">
+                                <h4>Lux Karavot</h4>
+                                <div class="product-price expensive">2,500,000 so'm</div>
+                                <div class="product-description">Premium sifat, katta o'lcham</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="wardrobes-products" class="products-grid hidden">
+                        <div class="product-card" data-price="cheap">
+                            <div class="price-badge cheap">Arzon</div>
+                            <div class="product-image">
+                                <i class="fas fa-door-open"></i>
+                            </div>
+                            <div class="product-info">
+                                <h4>Ikki Eshikli Shkaf</h4>
+                                <div class="product-price">600,000 so'm</div>
+                                <div class="product-description">Standart o'lchamdagi shkaf</div>
+                            </div>
+                        </div>
+
+                        <div class="product-card" data-price="expensive">
+                            <div class="price-badge expensive">Qimmat</div>
+                            <div class="product-image">
+                                <i class="fas fa-door-open"></i>
+                            </div>
+                            <div class="product-info">
+                                <h4>Katta Shkaf-kupe</h4>
+                                <div class="product-price expensive">3,000,000 so'm</div>
+                                <div class="product-description">Siljuvchi eshiklar, katta hajm</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        {% endblock %}
+    </main>
+
+    <footer class="footer" id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Lebem</h3>
+                    <p>Yuqori sifatli mebellar ishlab chiqaruvchi korxona</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Bog'lanish</h4>
+                    <p><i class="fas fa-phone"></i> +998 90 123 45 67</p>
+                    <p><i class="fas fa-envelope"></i> info@lebem.uz</p>
+                    <p><i class="fas fa-map-marker-alt"></i> Toshkent, O'zbekiston</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Ijtimoiy tarmoqlar</h4>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-telegram"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Lebem. Barcha huquqlar himoyalangan.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>
